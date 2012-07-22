@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGXNASK", "AGXNASK\AGXNASK\AGXNASK.csproj", "{AB91729C-C64B-46F7-9A59-19792A68E3C2}"
+EndProject
+Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "AGXNASKContent", "AGXNASK\AGXNASKContent\AGXNASKContent.contentproj", "{9AF5001E-4B00-4C50-A09C-21E38E0E482A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixInfo", "MatrixInfo\MatrixInfo\MatrixInfo.csproj", "{F6694611-D4A3-489D-8257-270B03D3950C}"
+EndProject
+Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "MatrixInfoContent", "MatrixInfo\MatrixInfoContent\MatrixInfoContent.contentproj", "{7303E9EA-AF95-4ADA-8F5C-A32949F4A441}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainMap", "TerrainMap\TerrainMap\TerrainMap.csproj", "{B34BC2EF-09A5-400C-B166-BAB1DA12AB4C}"
+EndProject
+Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "TerrainMapContent", "TerrainMap\TerrainMapContent\TerrainMapContent.contentproj", "{EC8C2BE0-9278-4548-B1DB-58F01D403556}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AB91729C-C64B-46F7-9A59-19792A68E3C2}.Debug|x86.ActiveCfg = Debug|x86
+		{AB91729C-C64B-46F7-9A59-19792A68E3C2}.Debug|x86.Build.0 = Debug|x86
+		{AB91729C-C64B-46F7-9A59-19792A68E3C2}.Release|x86.ActiveCfg = Release|x86
+		{AB91729C-C64B-46F7-9A59-19792A68E3C2}.Release|x86.Build.0 = Release|x86
+		{9AF5001E-4B00-4C50-A09C-21E38E0E482A}.Debug|x86.ActiveCfg = Debug|x86
+		{9AF5001E-4B00-4C50-A09C-21E38E0E482A}.Release|x86.ActiveCfg = Release|x86
+		{F6694611-D4A3-489D-8257-270B03D3950C}.Debug|x86.ActiveCfg = Debug|x86
+		{F6694611-D4A3-489D-8257-270B03D3950C}.Debug|x86.Build.0 = Debug|x86
+		{F6694611-D4A3-489D-8257-270B03D3950C}.Release|x86.ActiveCfg = Release|x86
+		{F6694611-D4A3-489D-8257-270B03D3950C}.Release|x86.Build.0 = Release|x86
+		{7303E9EA-AF95-4ADA-8F5C-A32949F4A441}.Debug|x86.ActiveCfg = Debug|x86
+		{7303E9EA-AF95-4ADA-8F5C-A32949F4A441}.Release|x86.ActiveCfg = Release|x86
+		{B34BC2EF-09A5-400C-B166-BAB1DA12AB4C}.Debug|x86.ActiveCfg = Debug|x86
+		{B34BC2EF-09A5-400C-B166-BAB1DA12AB4C}.Debug|x86.Build.0 = Debug|x86
+		{B34BC2EF-09A5-400C-B166-BAB1DA12AB4C}.Release|x86.ActiveCfg = Release|x86
+		{B34BC2EF-09A5-400C-B166-BAB1DA12AB4C}.Release|x86.Build.0 = Release|x86
+		{EC8C2BE0-9278-4548-B1DB-58F01D403556}.Debug|x86.ActiveCfg = Debug|x86
+		{EC8C2BE0-9278-4548-B1DB-58F01D403556}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
