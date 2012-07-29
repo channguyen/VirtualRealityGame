@@ -1,23 +1,3 @@
-/*  
-    Copyright (C) 2012 G. Michael Barnes
- 
-    The file Inspector.cs is part of AGXNASKv4.
-
-    AGXNASKv4 is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -42,8 +22,6 @@ namespace MatrixInfo {
     ///    I, i  toggles between  help/info, matrix, or misc displays for Draw();
     ///          The display of misc can be enabled/disabled with ShowMisc property.
     /// 
-    /// Mike Barnes
-    /// 1/ 25 /2010  last updated
     /// </summary>
     public class Inspector {
         // Display constants
@@ -104,10 +82,10 @@ namespace MatrixInfo {
         }
 
         /// <summary>
-        /// showInfo() is an event handler for the client's 'I', 'i' 
+        /// ShowInfo() is an event handler for the client's 'I', 'i' 
         /// user input.  Toggles the information display pane to be drawn.
         /// </summary>
-        public void showInfo() {
+        public void ShowInfo() {
             if (showHelp || showMatrices)
                 showHelp = showMatrices = false;
             else
@@ -124,20 +102,20 @@ namespace MatrixInfo {
         /// </summary>
         /// <param name="stringIndex"> 0..19 index of string to set</param>
         /// <param name="str"> value of string</param>
-        public void setInfo(int stringIndex, string str) {
+        public void SetInfo(int stringIndex, string str) {
             if (stringIndex >= 0 && stringIndex < InfoDisplayStrings)
                 infoString[stringIndex] = str;
         }
 
         /// <summary>
-        /// setMatrices displays two labelled matrices in the second info pane.
+        /// setMatrices displays two labeled matrices in the second info pane.
         /// Usually this is a "player's" or "NPavatar's" world, and current camera matrices.
         /// </summary>
         /// <param name="label1"> Description of first matrix</param>
         /// <param name="label2"> Description of second matrix</param>
         /// <param name="m1"> first matrix</param>
         /// <param name="m2"> second matrix</param>
-        public void setMatrices(string label1, string label2, Matrix m1, Matrix m2) {
+        public void SetMatrices(string label1, string label2, Matrix m1, Matrix m2) {
             infoBase = MatrixBase;
             infoString[infoBase++] =
                string.Format("      | {0,-43:s} |  {1,-43:s}", label1, label2);

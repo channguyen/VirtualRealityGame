@@ -20,6 +20,7 @@ namespace AGXNASK {
     /// Model3D's inherited List<Object3D> instance holds all members of the pack.
     /// </summary>
     public class Pack : MovableModel3D {
+        
         public enum FlockEnum {
             FLOCK_67_PERCENT,
             FLOCK_33_PERCENT,
@@ -27,56 +28,63 @@ namespace AGXNASK {
         }
 
         /*
-         * Neighbor distance
-         */
+                * Neighbor distance
+                */
         private const double NEIGHBOR_RADIUS = 4000.0;
 
         /*
-         * The closest possible distance between neighbor
-         */
+                * The closest possible distance between neighbor
+                */
         private const double SEPARATION_DISTANCE = 300.0;
 
         /*
-         * The minimum distance between boid
-         */
+                * The minimum distance between boid
+                */
         private const double OUTER_RADIUS = 5000.0;
 
         /* 
-         * The radius of the field of view 
-         */
+                * The radius of the field of view 
+                */
         private const double INNER_RADIUS = 500.0;
 
         /*
-         * The maximum angle
-         */
+                * The maximum angle
+                */
         private const double MAX_ANGLE = Math.PI / 4;
 
 
         /*
-         * Signal flocking
-         */
+                * Signal flocking
+                */
         private bool flogFlag = true;
 
         /*
-         * The leader
-         */
+                * The leader
+                */
         private Object3D leader;
 
         /*
-         * Random generator
-         */
+                * Random generator
+                */
         private Random random = null;
 
         /*
-         * Flocking mode
-         */
+                * Flocking mode
+                */
         private FlockEnum flockMode;
 
-        /*
-         * Flocking counter 
-         */
-        private int counter;
+        private Vector3 leaderLastPosition;
+        private Vector3 alphaLastPosition;
 
+
+        // flocking rules
+        private float visibility;
+        private float bindingDistance;
+        private float separationDistance;
+        private float maxTurnAngle;
+        private int flockSize;
+        private bool[,] neighbors;
+        private bool[] onReturn;
 
         public FlockEnum FlockMode {
             get {
@@ -96,6 +104,53 @@ namespace AGXNASK {
             }
         }
 
+        public float Visibility {
+            get {
+                return visibility;
+            }
+            set {
+                visibility = value;
+            }
+        }
+
+        public float BindingDistance {
+            get {
+                return bindingDistance;
+            }
+            set {
+                bindingDistance = value;
+            }
+        }
+
+        public float SeparationDistance {
+            get {
+                return separationDistance;
+            }
+            set {
+                separationDistance = value;
+            }
+        }
+
+        public float MaxTurnAngle {
+            get {
+                return maxTurnAngle;
+            }
+            set {
+                if (Math.Abs(value) <= Math.PI * 2) {
+                    maxTurnAngle = value;
+                }
+            }
+        }
+
+        public int FlockSize {
+            get {
+                return flockSize;
+            }
+            set {
+                flockSize = value;
+            }
+        }
+
         /// <summary>
         /// Construct a leaderless pack.
         /// </summary>
@@ -109,6 +164,8 @@ namespace AGXNASK {
             isCollidable = true;
             leader = null;
             flockMode = FlockEnum.FLOCK_0_PERCENT;
+
+            InitializeFlocing();
         }
 
         /// <summary>
@@ -125,69 +182,258 @@ namespace AGXNASK {
             isCollidable = true;
             leader = aLeader;
             flockMode = FlockEnum.FLOCK_0_PERCENT;
+
+            InitializeFlocing();
         }
 
         /// <summary>
-        /// Check if a boid neighbor is within a wide field of view
-        /// of another boid
+        /// Initialize all flocking variables
         /// </summary>
-        /// <param name="boid">the current boid</param>
-        /// <param name="neighbor">its neighbor</param>
-        /// <returns>true/false</returns>
-        private bool IsInWiderView(Object3D boid, Object3D neighbor) {
-            // outside circle is automatically false
-            if (Vector3.Distance(boid.Translation, neighbor.Translation) > OUTER_RADIUS) {
-                return false;
+        public void InitializeFlocing() {
+            visibility = (float)(2 * Math.PI / 3);
+            bindingDistance = 45000;
+            separationDistance = 1200;
+            maxTurnAngle = (float)Math.PI / 4;
+            onReturn = new bool[flockSize];
+            for (int i = 0; i < flockSize; ++i) {
+                onReturn[i] = false;
             }
-
-            // put them in x-z plane
-            Vector3 boidForward = new Vector3(boid.Forward.X, 0, boid.Forward.Z);
-            boidForward.Normalize();
-
-            Vector3 neighborLocation = new Vector3(neighbor.Translation.X, 0, neighbor.Translation.Z);
-            neighborLocation.Normalize();
-
-            // this is either left 135 degree or right 135 degree
-            float deg135 = (float)Math.PI * 135.0f / 180.0f;
-            float dot = Vector3.Dot(boidForward, neighborLocation);
-            float angle = 0.0f;
-            if (dot >= -1.0f && dot <= 1.0f) {
-                angle = (float)Math.Acos(dot);
-                if (angle <= deg135)
-                    return true;
-            }
-            return false;
         }
 
         /// <summary>
-        /// Get the turn angle between a boid and a position
-        /// and divide by the distance between them to get 
-        /// a reasonable angle with respect to distance
+        /// Implemented from ideas and methods as provided
+        /// O"Reilly Book: AI for Game Developers
         /// </summary>
-        /// <param name="source"></param>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        private double GetTurnAngle(Object3D boid, Vector3 v) {
-            // put them in the same plane
-            Vector3 vInXZ = new Vector3(v.X, 0, v.Z);
-            Vector3 boidLocationInXZ = new Vector3(boid.Translation.X, 0, boid.Translation.Z);
-            Vector3 target = vInXZ - boidLocationInXZ;
-            Vector3 boidForward = boid.Forward;
+        /// <param name="index"></param>
+        private void InterceptLeader(int index) {
+            Vector3 evaderPosition = new Vector3(leader.Translation.X, 0, leader.Translation.Z);
+            Vector3 chaserPosition = new Vector3(instance[index].Translation.X, 0, instance[index].Translation.Z);
 
-            // normalize the forward vector of boid
-            boidForward.Normalize();
-            target.Normalize();
+            if (leaderLastPosition != null && leaderLastPosition != evaderPosition && alphaLastPosition != null) {
+                Vector3 evaderVelocity = evaderPosition - leaderLastPosition;
+                Vector3 chaserVelocity = chaserPosition - alphaLastPosition;
+                Vector3 relativeVelocity = evaderVelocity - chaserVelocity;
+                Vector3 distance = evaderPosition - chaserPosition;
+                float timeToClose = distance.Length() / relativeVelocity.Length();
+                Vector3 projectedPosition = evaderPosition + evaderVelocity * timeToClose;
+                instance[index].TurnToFace(projectedPosition);
+            }
+            else {
+                instance[index].TurnToFace(leader.Translation);
+            }
 
-            double dot = Vector3.Dot(target, boidForward);
-            if (dot < -1)
-                dot = -1;
-
-            if (dot > 1)
-                dot = 1;
-
-            return Math.Acos(dot) * Math.Sign(Vector3.Cross(target, boidForward).Y);
+            leaderLastPosition = evaderPosition;
+            alphaLastPosition = chaserPosition;
         }
 
+        public void UpdateFlockingMode() {
+            switch (flockMode) {
+                case FlockEnum.FLOCK_0_PERCENT:
+                    break;
+
+                case FlockEnum.FLOCK_33_PERCENT:
+                    bindingDistance = 10000;
+                    separationDistance = 2000;
+                    break;
+
+                case FlockEnum.FLOCK_67_PERCENT:
+                    bindingDistance = 5000;
+                    separationDistance = 1000;
+                    break;
+            }
+        }
+
+        private void ApplyFlockingRules(int index) {
+            int count;
+            float distance;
+            float angle;
+
+            bool isNeighbor;
+            bool inRange;
+            bool inSight;
+
+            Vector3 toTarget;
+            Vector3 averagePosition;
+            Vector3 averageBearing;
+
+            MapNeighbors();
+            isNeighbor = inRange = inSight = false;
+            toTarget = leader.Translation - instance[index].Translation;
+            distance = toTarget.Length();
+
+            if (distance > bindingDistance) {
+                onReturn[index] = true;
+                if (distance > 1.5 * bindingDistance && index == 0) {
+                    InterceptLeader(index);
+                }
+                else {
+                    toTarget = leader.Translation - instance[index].Translation;
+                    angle = GetTurnAngle(instance[index].Forward, toTarget);
+                    instance[index].Yaw = angle;
+                }
+            }
+            else {
+                float cohesionAngle = 0.0f;
+                float bearingAngle = 0.0f;
+                float separationAngle = 0.0f;
+                float separationWeight = 0.0f;
+                float separationBearing = 0.0f;
+                float minSeparation = 0.0f;
+                float maxSeparation = 0.0f;
+
+                int leaderWeight = 2;
+                averagePosition = new Vector3(leader.Translation.X, 0, leader.Translation.Z);
+                averageBearing = new Vector3(leader.Forward.X, 0, leader.Forward.Z);
+                averagePosition *= leaderWeight;
+                averageBearing *= leaderWeight;
+
+                count = leaderWeight;
+
+                for (int i = 0; i < flockSize; ++i) {
+                    if (i == index) {
+                        continue;
+                    }
+
+                    toTarget = instance[i].Translation - instance[index].Translation;
+                    isNeighbor = neighbors[index, i];
+                    inSight = Math.Abs(GetTurnAngle(instance[index].Forward, toTarget)) <= visibility;
+
+                    if (isNeighbor && inSight) {
+                        averagePosition += new Vector3(instance[i].Translation.X, 0, instance[i].Translation.Z);
+                        averageBearing += new Vector3(instance[i].Forward.X, 0, instance[i].Forward.Z);
+                        if (toTarget.Length() < separationDistance) {
+                            separationWeight = (separationDistance - toTarget.Length()) / SeparationDistance;
+                            separationBearing = GetTurnAngle(instance[index].Forward, toTarget);
+                            angle = separationBearing * separationWeight * -1.0f;
+                            if (angle > 0 && angle > maxSeparation) {
+                                maxSeparation = angle;
+                            }
+                            else if (angle < 0 && angle < minSeparation) {
+                                minSeparation = angle;
+                            }
+
+                            separationAngle += angle;
+                        }
+
+                        count++;
+                    }
+
+                    if (separationAngle > 0 && separationAngle > maxSeparation) {
+                        separationAngle = maxSeparation;
+                    }
+                    else if (separationAngle < 0 && separationAngle < minSeparation) {
+                        separationAngle = minSeparation;
+                    }
+                }
+
+                if (count > 0) {
+                    distance = 0.0f;
+                    float angleChange = 0.0f;
+                    float steering = 1.0f;
+                    float deltaWeight = 0.0f;
+
+                    averagePosition = averagePosition / count;
+                    toTarget = averagePosition - instance[index].Translation;
+                    toTarget.Y = 0;
+                    angleChange = GetTurnAngle(instance[index].Forward, toTarget);
+
+                    distance = toTarget.Length();
+                    cohesionAngle = angleChange;
+                    if (distance > bindingDistance) {
+                        cohesionAngle = angleChange;
+                        steering = 0.0f;
+                    }
+                    else {
+                        cohesionAngle = angleChange * (distance / bindingDistance);
+                        steering = steering - (distance / bindingDistance);
+                    }
+
+                    if (steering > 0) {
+                        bearingAngle = 0.0f;
+                        averageBearing = averageBearing / count;
+                        angleChange = GetTurnAngle(instance[index].Forward, averageBearing);
+                        if (Math.Abs(Vector3.Dot(Vector3.Normalize(instance[index].Forward), Vector3.Normalize(averageBearing))) < 1) {
+                            deltaWeight = (float) Math.Acos(Vector3.Dot(Vector3.Normalize(instance[index].Forward), Vector3.Normalize(averageBearing)));
+                            deltaWeight = deltaWeight / (float) Math.PI;
+                            bearingAngle = angleChange * deltaWeight;
+                            bearingAngle *= steering;
+                            steering -= deltaWeight;
+                        }
+                    }
+
+                    if (steering > 0) {
+                        if (float.IsNaN(separationAngle)) {
+                            separationAngle = 0.0f;
+                        }
+
+                        if (float.IsNaN(instance[index].Yaw)) {
+                            instance[index].Yaw = 0.0f;
+                        }
+                    }
+
+                    float finalAngle = cohesionAngle + bearingAngle + separationAngle;
+                    if (Math.Abs(finalAngle) > maxTurnAngle) {
+                        if (finalAngle < 0) {
+                            instance[index].Yaw = maxTurnAngle - 1;
+                        }
+                        else {
+                            instance[index].Yaw = maxTurnAngle;
+                        }
+                    }
+                    else {
+                        instance[index].Yaw = finalAngle;
+                    }
+                }
+            }
+        }
+
+        private void MapNeighbors() {
+            bool isNeighbor = false;
+            neighbors = new bool[flockSize, flockSize];
+            for (int i = 0; i < flockSize - 1; ++i) {
+                for (int j = i + 1; j < flockSize; ++j) {
+                    // avoid checking itself
+                    if (i == j) {
+                        continue;
+                    }
+
+                    isNeighbor = false;
+                    if (Vector3.Distance(instance[i].Translation, instance[j].Translation) <= bindingDistance) {
+                        isNeighbor = true;
+                    }
+
+                    neighbors[i, j] = neighbors[j, i] = isNeighbor;
+                }
+            }
+        }
+
+        public float GetTurnAngle(Vector3 vectorA, Vector3 vectorB) {
+            if (vectorB.Length() == 0)
+                return 0;
+
+            Vector3 cross;
+            vectorA.Normalize();
+            vectorB.Normalize();
+
+            float dot = 0;
+            float acos = 0;
+            float angle = 0;
+
+            dot = Vector3.Dot(vectorA, vectorB);
+            if (dot > 1.0) {
+                dot = 1.0f;
+            }
+            else if (dot < -1.0) {
+                dot = -1.0f;
+            }
+            acos = (float)Math.Acos(dot);
+            cross = Vector3.Cross(vectorA, vectorB);
+
+            angle = acos * Math.Sign(cross.Y);
+
+            return angle;
+        }
+       
         private double ToDegree(float radian) {
             return radian;
         }
@@ -214,70 +460,12 @@ namespace AGXNASK {
 
         private void MoveByFlocking() {
             for (int i = 0; i < instance.Count; ++i) {
-                if (Vector3.Distance(instance[i].Translation, leader.Translation) >= OUTER_RADIUS) {
-                    instance[i].TurnToFace(leader.Translation);
-                }
-                else {
-                    Cohere(i);
-                    Align(i);
-                    Separate(i);
-                }
-
+                ApplyFlockingRules(i);
                 instance[i].UpdateMovableObject();
                 stage.SetSurfaceHeight(instance[i]);
             }
         }
-
-        private void Cohere(int i) {
-            Vector3 averagePosition = new Vector3(0.0f, 0.0f, 0.0f);
-            int n = 0;
-            for (int j = 0; j < instance.Count; ++j) {
-                if (i != j) {
-                    double d = Vector3.Distance(instance[i].Translation, instance[j].Translation);
-                    if (d > 2000 && d < NEIGHBOR_RADIUS) {
-                        averagePosition += instance[j].Translation;
-                        n++;
-                    }
-                }
-            }
-
-            if (n > 0) {
-                averagePosition += leader.Translation;
-                averagePosition /= (n + 1);
-                instance[i].TurnToFace(averagePosition);
-            }
-        }
-
-        private void Align(int i) {
-            Vector3 averageForward = new Vector3(0.0f, 0.0f, 0.0f);
-            int n = 0;
-            for (int j = 0; j < instance.Count; ++j) {
-                if (i != j) {
-                    double d = Vector3.Distance(instance[i].Translation, instance[j].Translation);
-                    if (d > 2000 && d < NEIGHBOR_RADIUS) {
-                        averageForward += instance[j].Forward;
-                        n++;
-                    }
-                }
-            }
-
-            if (n > 0) {
-                averageForward += leader.Forward;
-                averageForward /= (n + 1);
-                instance[i].TurnToFace(averageForward);
-            }
-        }
-
-        private void Separate(int i) {
-            Vector3 averageForward = new Vector3(0.0f, 0.0f, 0.0f);
-            for (int j = 0; j < instance.Count; ++j) {
-                double d = Vector3.Distance(instance[i].Translation, instance[j].Translation);
-                if (d < SEPARATION_DISTANCE) {
-                    instance[j].TurnAway(instance[i].Translation);
-                }
-            }
-        }
-
+       
         public double ToDegree(double radian) {
             return (radian * 180 / Math.PI);
         }
@@ -288,23 +476,15 @@ namespace AGXNASK {
         /// Supports leaderless and leader based "flocking" 
         /// </summary>      
         public override void Update(GameTime gameTime) {
-            counter++;
-            double randValue = random.NextDouble();
+            UpdateFlockingMode();
+
             if (flockMode == FlockEnum.FLOCK_0_PERCENT) {
                 MoveRandomly();
             }
-            else if (flockMode == FlockEnum.FLOCK_33_PERCENT) {
-                Debug.WriteLine("counter = " + counter);
-                if (counter % 7 == 0) {
-                    MoveByFlocking();
-                }
+            else {
+                MoveByFlocking();
             }
-            else { // flockMode == FlockEnum.FLOCK_67_PERCENT
-                if (counter % 3 == 0) {
-                    MoveByFlocking();
-                }
-            }
-              
+
             base.Update(gameTime);
         }
     }

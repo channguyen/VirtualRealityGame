@@ -1,22 +1,3 @@
-/*  
-    Copyright (C) 2012 G. Michael Barnes
- 
-    The file TerrainMap.cs is part of AGXNASKv4.
-
-    AGXNASKv4 is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 using System;
 using System.IO;
 using Microsoft.Xna.Framework;
@@ -57,19 +38,14 @@ namespace TerrainMap {
     /// 
     /// Program design was influenced by Riemer Grootjans example 3.7
     /// Create a texture and save to file.
-    /// In XNA 2.0 Grame Programming Recipies:  A Problem-Solution Approach,
+    /// In XNA 2.0 Game Programming Recipe:  A Problem-Solution Approach,
     /// pp 176-178, Apress, 2008.
     /// 
     /// updated for XNA4
-    /// 
-    /// Mike Barnes
-    /// 2/4/2012
     /// </summary>
 
     public class TerrainMap : Game {
-        // textures should be powers of 2 for mipmapping
-
-        #region Fields
+        // textures should be powers of 2 for mip-mapping
         private const int TEXTURE_WIDTH = 512;
         private const int TEXTURE_HEIGHT = 512;
         private GraphicsDeviceManager graphics;
@@ -83,7 +59,6 @@ namespace TerrainMap {
         private Random random;
         private bool showHeight = false;
         private KeyboardState oldState;
-        #endregion
 
         /// <summary>
         /// Constructor

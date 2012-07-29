@@ -20,8 +20,6 @@ namespace AGXNASK {
     /// method makePath().  The exploration path is traversed in a reverse path loop.
     /// Paths can also be specified in text files of Vector3 values.  
     /// In this case create the Path with a string argument for the file's address.
-    /// 
-    /// 2/14/2012 last changed
     /// </summary>
 
     public class NPAgent : Agent {

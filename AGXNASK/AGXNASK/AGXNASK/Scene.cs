@@ -6,14 +6,8 @@ using System.Collections.Generic;
 namespace AGXNASK {
     /// <summary>
     /// Scene.cs  the "main class" for AGXNASK
-    /// 
-    /// AGXNASK is a starter kit for Comp 565 assignments using XNA Game Studio 4.0
-    /// and Visual Studio 2010.
-    /// 
     /// Scene declares and initializes program specific entities and user interaction.
-    /// 
     /// See AGXNASKv4-doc.pdf file for class diagram and usage information. 
-    /// 
     /// </summary>
     public class Scene : Stage {
         public Scene() {

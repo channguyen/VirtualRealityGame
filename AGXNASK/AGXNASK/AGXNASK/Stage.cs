@@ -20,12 +20,6 @@ namespace AGXNASK {
     /// and user input options.  Stage attempts to "hide" the infrastructure of AGXNASK
     /// for the developer.  It's subclass Stage is where the program specific aspects are
     /// declared and created.
-    /// 
-    /// AGXNASK is a starter kit for Comp 565 assignments using XNA Game Studio 4.0
-    /// and Visual Studio 2010.
-    /// 
-    /// See AGXNASKv4-doc.pdf file for class diagram and usage information. 
-    /// 
     /// </summary>
     public class Stage : Game {
         public enum GameMode {
@@ -754,7 +748,7 @@ namespace AGXNASK {
             inspector = new Inspector(display, inspectorViewport, inspectorFont, Color.Black, inspectorBackground);
 
             // create information display strings
-            inspector.SetInfo(0, "AGXNASKv4 -- Academic Graphics XNA Starter Kit for CSUN Comp 565 assignments.");
+            inspector.SetInfo(0, "AGXNASKv4 ");
             inspector.SetInfo(1, "Press keyboard for input (not case sensitive 'H'  'h')");
             inspector.SetInfo(2, "Inspector toggles:  'H' help or info   'M'  matrix or info   'I'  displays next info pane.");
             inspector.SetInfo(3, "Arrow keys move the player in, out, left, or right.  'R' resets player to initial orientation.");
@@ -777,6 +771,7 @@ namespace AGXNASK {
             Random random = new Random();
             dogs = new Pack(this, "dog", "dogV3", player.AgentObject);
             Components.Add(dogs);
+            int count = 0;
             for (int x = -9; x < 10; x += 6) {
                 for (int z = -3; z < 4; z += 6) {
                     float scale = (float)(0.5 + random.NextDouble());
@@ -786,8 +781,12 @@ namespace AGXNASK {
                         new Vector3(xPos, terrain.SurfaceHeight((int)xPos / SPACING, (int)zPos / SPACING), zPos),
                         new Vector3(0, 1, 0), 0.0f,
                         new Vector3(scale, scale, scale));
+                    count++;
                 }
             }
+
+            dogs.FlockSize = count;
+            dogs.InitializeFlocing();
         }
 
         /// <summary>
